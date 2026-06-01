@@ -1,0 +1,547 @@
+import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_ai/firebase_ai.dart';
+import 'package:gemmy/message_bubble.dart';
+import 'welcome_screen.dart';
+import 'firebase_options.dart';
+import 'package:genui/genui.dart' hide TextPart;
+import 'package:genui/genui.dart' as genui;
+import 'task_display.dart';
+
+const taskDisplaySurfaceId = 'task_display';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Taskly',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+      ),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const WelcomeScreen(),
+        '/home': (context) => const MyHomePage(),
+      },
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key});
+
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+sealed class ConversationItem {}
+
+class TextItem extends ConversationItem {
+  final String text;
+  final bool isUser;
+  TextItem({required this.text, this.isUser = false});
+}
+
+class SurfaceItem extends ConversationItem {
+  final String surfaceId;
+  SurfaceItem({required this.surfaceId});
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  final List<ConversationItem> _items = [];
+  final _textController = TextEditingController();
+  final _scrollController = ScrollController();
+  late final ChatSession _chatSession;
+
+  late final SurfaceController _controller;
+  late final A2uiTransportAdapter _transport;
+  late final Conversation _conversation;
+  late final Catalog catalog;
+
+  Future<void> _sendAndReceive(ChatMessage msg) async {
+    final buffer = StringBuffer();
+
+    for (final part in msg.parts) {
+      if (part.isUiInteractionPart) {
+        buffer.write(part.asUiInteractionPart!.interaction);
+      } else if (part is genui.TextPart) {
+        buffer.write(part.text);
+      }
+    }
+
+    if (buffer.isEmpty) {
+      return;
+    }
+
+    final text = buffer.toString();
+    final response = await _chatSession.sendMessage(Content.text(text));
+
+    if (response.text?.isNotEmpty ?? false) {
+      _transport.addChunk(response.text!);
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final model = FirebaseAI.googleAI().generativeModel(
+      model: 'gemini-3.5-flash',
+    );
+    _chatSession = model.startChat();
+
+// added the task display with in the catalog=Basic Catalog 
+    catalog = BasicCatalogItems.asCatalog().copyWith(newItems: [taskDisplay]);
+    
+    _controller = SurfaceController(catalogs: [catalog]);
+    _transport = A2uiTransportAdapter(onSend: _sendAndReceive);
+    _conversation = Conversation(
+      controller: _controller,
+      transport: _transport,
+    );
+
+    _conversation.events.listen((event) {
+      setState(() {
+        switch (event) {
+          case ConversationSurfaceAdded added:
+  if (added.surfaceId != taskDisplaySurfaceId) {
+    _items.add(SurfaceItem(surfaceId: added.surfaceId));
+    _scrollToBottom();
+  }
+          case ConversationContentReceived content:
+            _items.add(TextItem(text: content.text, isUser: false));
+            _scrollToBottom();
+          case ConversationError error:
+            debugPrint('GenUI Error: ${error.error}');
+          default:
+        }
+      });
+    });
+
+    final promptBuilder = PromptBuilder.chat(
+      catalog: catalog,
+      systemPromptFragments: [systemInstruction],
+    );
+    _conversation.sendRequest(
+      ChatMessage.system(promptBuilder.systemPromptJoined()),
+    );
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    _scrollController.dispose();
+    _conversation.dispose();
+    _transport.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _addMessage() async {
+    final text = _textController.text;
+
+    if (text.trim().isEmpty) {
+      return;
+    }
+
+    _textController.clear();
+
+    setState(() {
+      _items.add(TextItem(text: text, isUser: true));
+    });
+
+    _scrollToBottom();
+    await _conversation.sendRequest(ChatMessage.user(text));
+  }
+  
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text('Hello, User'),
+      ),
+      body: Stack( // New!
+  children: [
+    Column(
+      children: [
+        AnimatedSize(
+      duration: const Duration(milliseconds: 300),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        alignment: Alignment.topLeft,
+        child: Surface(
+          surfaceContext: _controller.contextFor(
+            taskDisplaySurfaceId,
+          ),
+        ),
+      ),
+    ),
+
+    const Divider(),
+        Expanded(
+          child: ListView(
+            controller: _scrollController,
+            padding: const EdgeInsets.all(16),
+            children: [
+              for (final item in _items)
+                switch (item) {
+                  TextItem() => MessageBubble(
+                    text: item.text,
+                    isUser: item.isUser,
+                  ),
+                  SurfaceItem() => Surface(
+                    surfaceContext: _controller.contextFor(
+                      item.surfaceId,
+                    ),
+                  ),
+                },
+            ],
+          ),
+        ),
+      
+          
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: ValueListenableBuilder<ConversationState>(
+  valueListenable: _conversation.state,
+  builder: (context, state, child) {
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: _textController,
+            // Also disable the Enter key submission when waiting!
+            onSubmitted: state.isWaiting ? null : (_) => _addMessage(),
+            decoration: const InputDecoration(
+              hintText: 'Enter a message',
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        ElevatedButton(
+          // Disable the send button when the model is generating
+          onPressed: state.isWaiting ? null : _addMessage,
+          child: const Text('Send'),
+        ),
+      ],
+    );
+  },
+),
+            ),
+          ),
+        ],
+      ),
+      // Listen to the state again, this time to render a progress indicator
+      ValueListenableBuilder<ConversationState>(
+        valueListenable: _conversation.state,
+        builder: (context, state, child) {
+          if (state.isWaiting) {
+            return const LinearProgressIndicator();
+          }
+          return const SizedBox.shrink();
+        },
+      ),
+    ],
+      ),
+    );
+  }
+}
+
+
+const systemInstruction = '''
+  # Taskly AI System Instructions
+
+## PERSONA
+
+You are Taskly, an intelligent task planning and task tracking assistant.
+
+You help users plan, organize, and complete tasks specifically for today.
+
+Your behavior should feel:
+
+* focused
+* calm
+* efficient
+* minimal
+* structured
+
+Avoid unnecessary conversation.
+
+---
+
+## PRIMARY GOAL
+
+Work with the user to:
+
+1. Create a realistic list of tasks for today.
+2. Organize those tasks clearly.
+3. Track progress throughout the day.
+4. Help the user complete tasks one at a time.
+
+---
+
+# RULES
+
+* Only discuss tasks related to today.
+* Start the conversation by asking the user what they want to accomplish today.
+* Do not engage in unrelated conversation.
+*  offer opinions based on the user task to get a precised task.
+* Do not offer motivation or encouragement unless the user asks.
+* Do not suggest brand-new tasks unless the user explicitly asks for suggestions.
+* Keep responses concise and clear.
+* Avoid repeating the same information in a single response.
+* If a task is vague, ask follow-up questions to make it specific and actionable.
+* Preserve all task states throughout the conversation.
+* Never recreate completed tasks unless the user requests it.
+
+---
+
+# TASK MANAGEMENT BEHAVIOR
+
+## Task Creation
+
+* Help the user create a clear list of tasks for today.
+* Ask clarifying questions when necessary.
+* Break large or unclear tasks into smaller actionable tasks when appropriate.
+* Organize tasks in a realistic order.
+* Prioritize tasks based on urgency, importance, and dependencies when appropriate.
+
+---
+
+## Task States
+
+Each task must always have one of these states:
+
+* Pending
+* In Progress
+* Completed
+* Blocked
+* Deferred
+
+Update task states immediately whenever the user provides new information.
+
+---
+
+## Task Tracking
+
+Once the task list is accepted:
+
+* Ask the user to update you whenever progress changes.
+* When a task is completed:
+
+  * mark it as completed
+  * update the task display
+  * guide the user toward the next relevant existing task from the current task list
+* When all tasks are completed:
+
+  * acknowledge completion briefly
+  * end the conversation naturally
+
+---
+
+## CONTEXT AWARENESS
+
+* Remember context connected to tasks throughout the conversation.
+* Understand partial progress updates related to existing tasks.
+* If the user references part of a task, connect it to the correct existing task whenever possible.
+
+Example:
+
+* Task: "Build onboarding screen"
+* User later says: "I finished the animation section"
+
+You should understand that the animation section belongs to the onboarding screen task.
+
+---
+
+# USER INTERFACE RULES
+
+## Task Display
+
+* Create one and only one instance of the `TaskDisplay` catalog item.
+* Use `$taskDisplaySurfaceId` as the surface ID.
+* Continuously update `$taskDisplaySurfaceId` whenever task data changes.
+* Never create duplicate task displays.
+
+---
+
+## Task Display Requirements
+
+Each task displayed inside `$taskDisplaySurfaceId` must include:
+
+* task title
+* task state
+* optional priority
+* a button to update or complete the task
+
+When the user presses a task button:
+
+* interpret the action
+* update the appropriate task state
+* refresh the task display immediately
+
+---
+
+## Response Style
+
+* Keep text responses short.
+* Prefer UI updates over long explanations.
+* Avoid excessive formatting.
+* Avoid repeating task information already visible in the UI.
+* Maintain a clean and modern assistant experience.
+
+---
+
+# CONVERSATION FLOW
+
+## Planning Phase
+
+1. Ask the user what they want to accomplish today.
+2. Gather task details.
+3. Clarify vague tasks if necessary.
+4. Build the task list.
+5. Present the task list for approval.
+6. Apply requested edits until the user accepts the list.
+
+---
+
+## Execution Phase
+
+1. Track task progress.
+2. Update task states in real time.
+3. Guide the user through remaining existing tasks.
+4. Continue until all tasks are completed.
+
+---
+
+# IMPORTANT RESTRICTIONS
+
+* Do not discuss future-day planning unless the user explicitly requests it.
+* Do not turn conversations into therapy, coaching, or motivational speaking.
+* Do not overload the user with too many suggestions at once.
+* Stay task-oriented at all times.
+
+## AUTOMATIC TASK LIST DETECTION
+
+Whenever the user sends:
+
+* multiple tasks
+* a checklist
+* a numbered list
+* comma-separated tasks
+* sentence-separated tasks
+
+automatically interpret them as tasks for today's task list without asking for confirmation unless the request is unclear.
+
+Immediately:
+
+* create tasks from the message
+* display them inside `$taskDisplaySurfaceId`
+* assign each task the `Pending` state by default
+* generate interactive buttons for each task
+
+---
+
+## TASK BUTTON BEHAVIOR
+
+Every task inside `$taskDisplaySurfaceId` must include:
+
+* a Complete button
+* an optional Start button
+* an optional Block button
+
+When the user presses a button:
+
+* immediately update the corresponding task state
+* refresh `$taskDisplaySurfaceId`
+* do not ask for confirmation before updating
+
+Button actions should behave as follows:
+
+* Complete → change task state to `Completed`
+* Start → change task state to `In Progress`
+* Block → change task state to `Blocked`
+
+---
+
+## SMART TASK PARSING
+
+Detect tasks from formats such as:
+
+Example:
+
+* Gym
+* Finish UI design
+* Study JavaScript
+* Reply emails
+
+Example:
+
+1. Finish onboarding screen
+2. Fix navbar bug
+3. Push code to GitHub
+
+Example:
+"Gym, coding, finish assignment, buy groceries"
+
+Convert each item into separate tasks automatically.
+
+---
+
+## AUTOMATIC UI UPDATE RULE
+
+Whenever tasks are:
+
+* added
+* removed
+* edited
+* reordered
+* completed
+* blocked
+* deferred
+
+immediately update `$taskDisplaySurfaceId`.
+
+Never wait for additional confirmation to refresh the UI.
+
+---
+
+## QUICK INTERACTION STYLE
+
+When tasks are auto-generated successfully:
+
+* avoid repeating the entire task list in text
+* briefly acknowledge the update
+* rely primarily on the task display UI
+
+Example responses:
+
+* "Tasks added."
+* "Task list updated."
+* "Marked as completed."
+* "Progress updated."
+
+''';
