@@ -223,33 +223,15 @@ class _MyHomePageState extends State<MyHomePage> {
       
           
           SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: ValueListenableBuilder<ConversationState>(
-  valueListenable: _conversation.state,
-  builder: (context, state, child) {
-    return Row(
-      children: [
-        Expanded(
-          child: TextField(
-            controller: _textController,
-            // Also disable the Enter key submission when waiting!
-            onSubmitted: state.isWaiting ? null : (_) => _addMessage(),
-            decoration: const InputDecoration(
-              hintText: 'Enter a message',
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        ElevatedButton(
-          // Disable the send button when the model is generating
-          onPressed: state.isWaiting ? null : _addMessage,
-          child: const Text('Send'),
-        ),
-      ],
-    );
-  },
-),
+            child: ValueListenableBuilder<ConversationState>(
+              valueListenable: _conversation.state,
+              builder: (context, state, child) {
+                return MessageInput(
+                  controller: _textController,
+                  onSend: _addMessage,
+                  isWaiting: state.isWaiting,
+                );
+              },
             ),
           ),
         ],
@@ -270,6 +252,121 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
+class MessageInput extends StatefulWidget {
+  final TextEditingController controller;
+  final VoidCallback onSend;
+  final bool isWaiting;
+
+  const MessageInput({
+    super.key,
+    required this.controller,
+    required this.onSend,
+    required this.isWaiting,
+  });
+
+  @override
+  State<MessageInput> createState() => _MessageInputState();
+}
+
+class _MessageInputState extends State<MessageInput> {
+  @override
+  void initState() {
+    super.initState();
+    widget.controller.addListener(_handleTextChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_handleTextChanged);
+    super.dispose();
+  }
+
+  void _handleTextChanged() {
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final isNotEmpty = widget.controller.text.trim().isNotEmpty;
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceVariant.withOpacity(0.4),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: TextField(
+                  controller: widget.controller,
+                  maxLines: 6,
+                  minLines: 1,
+                  textCapitalization: TextCapitalization.sentences,
+                  style: const TextStyle(fontSize: 16),
+                  decoration: InputDecoration(
+                    hintText: 'Message...',
+                    hintStyle: TextStyle(
+                      color: colorScheme.onSurfaceVariant.withOpacity(0.6),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onSubmitted: (widget.isWaiting || !isNotEmpty)
+                      ? null
+                      : (_) => widget.onSend(),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6, right: 4),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: (isNotEmpty && !widget.isWaiting)
+                      ? colorScheme.primary
+                      : colorScheme.onSurface.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  onPressed: (isNotEmpty && !widget.isWaiting)
+                      ? widget.onSend
+                      : null,
+                  icon: Icon(
+                    Icons.arrow_upward,
+                    size: 18,
+                    color: (isNotEmpty && !widget.isWaiting)
+                        ? colorScheme.onPrimary
+                        : colorScheme.onSurface.withOpacity(0.3),
+                  ),
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 const systemInstruction = '''
   # Taskly AI System Instructions
@@ -308,7 +405,7 @@ Work with the user to:
 * Only discuss tasks related to today.
 * Start the conversation by asking the user what they want to accomplish today.
 * Do not engage in unrelated conversation.
-*  offer opinions based on the user task to get a precised task.
+* Do not offer opinions unless the user asks.
 * Do not offer motivation or encouragement unless the user asks.
 * Do not suggest brand-new tasks unless the user explicitly asks for suggestions.
 * Keep responses concise and clear.

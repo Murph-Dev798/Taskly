@@ -44,7 +44,7 @@ class WelcomeScreen extends StatelessWidget {
                     Navigator.of(context).pushReplacementNamed('/home');
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(255, 114, 224, 239),
+                    backgroundColor: const Color.fromARGB(255, 1, 3, 3),
                     foregroundColor: Colors.white,
                     elevation: 8,
                     shape: RoundedRectangleBorder(
