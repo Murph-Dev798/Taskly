@@ -319,7 +319,7 @@ class _MessageInputState extends State<MessageInput> {
                   textCapitalization: TextCapitalization.sentences,
                   style: const TextStyle(fontSize: 16),
                   decoration: InputDecoration(
-                    hintText: 'Message...',
+                    hintText: 'Start Planning',
                     hintStyle: TextStyle(
                       color: colorScheme.onSurfaceVariant.withOpacity(0.6),
                       fontSize: 16,
@@ -482,6 +482,7 @@ You should understand that the animation section belongs to the onboarding scree
 * Use `$taskDisplaySurfaceId` as the surface ID.
 * Continuously update `$taskDisplaySurfaceId` whenever task data changes.
 * Never create duplicate task displays.
+* And if the user ask you to Clear all done tasks, then you should clear all the done tasks and update the task display.
 
 ---
 

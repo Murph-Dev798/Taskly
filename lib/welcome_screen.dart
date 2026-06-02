@@ -52,7 +52,7 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    'Start Planning',
+                    'Get Started',
                     style: GoogleFonts.workSans(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,

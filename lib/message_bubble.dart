@@ -52,7 +52,7 @@ class MessageBubble extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withAlpha(40),
+                        color: const Color.fromARGB(255, 255, 249, 249).withAlpha(40),
                         blurRadius: 4,
                         offset: const Offset(0, 2),
                       ),
