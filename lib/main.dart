@@ -4,6 +4,7 @@ import 'package:firebase_ai/firebase_ai.dart';
 import 'package:gemmy/message_bubble.dart';
 import 'welcome_screen.dart';
 import 'firebase_options.dart';
+import 'taskly_welcome_dialog.dart';
 import 'package:genui/genui.dart' hide TextPart;
 import 'package:genui/genui.dart' as genui;
 import 'task_display.dart';
@@ -133,6 +134,11 @@ class _MyHomePageState extends State<MyHomePage> {
     _conversation.sendRequest(
       ChatMessage.system(promptBuilder.systemPromptJoined()),
     );
+
+    // Show the welcome dialog once the home screen is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      TasklyWelcomeDialog.show(context);
+    });
   }
 
   void _scrollToBottom() {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'taskly_welcome_dialog.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -40,7 +41,6 @@ class WelcomeScreen extends StatelessWidget {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    // This will be connected in main.dart
                     Navigator.of(context).pushReplacementNamed('/home');
                   },
                   style: ElevatedButton.styleFrom(
@@ -56,7 +56,6 @@ class WelcomeScreen extends StatelessWidget {
                     style: GoogleFonts.workSans(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      
                     ),
                   ),
                 ),
