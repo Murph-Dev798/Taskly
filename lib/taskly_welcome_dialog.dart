@@ -69,7 +69,7 @@ class _TasklyWelcomeDialogState extends State<TasklyWelcomeDialog> {
                         color: colorScheme.onSurface,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
                     
                     // Body Text
                     Text(
@@ -153,47 +153,13 @@ class _ProductivityIllustration extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Background circles for depth
-          Positioned(
-            right: 10,
-            top: 20,
-            child: _Circle(size: 20, color: colorScheme.primary.withOpacity(0.2)),
-          ),
-          Positioned(
-            left: 20,
-            bottom: 20,
-            child: _Circle(size: 15, color: colorScheme.secondary.withOpacity(0.2)),
-          ),
-          
-          // Central Icon
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: colorScheme.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(30),
-            ),
-            child: Icon(
-              Icons.auto_awesome_rounded,
-              size: 60,
-              color: colorScheme.primary,
-            ),
-          ),
-          
-          // Floating Task Checks
-          Positioned(
-            top: 30,
-            left: 15,
-            child: _FloatingElement(
-              delay: 0,
-              child: Icon(Icons.check_circle, color: Colors.green.shade400, size: 24),
-            ),
-          ),
-          Positioned(
-            bottom: 30,
-            right: 15,
-            child: _FloatingElement(
-              delay: 500,
-              child: Icon(Icons.bolt_rounded, color: Colors.amber.shade400, size: 28),
+            // Central illustration
+          ClipOval(
+            child: Image.asset(
+              'images/Marvito.png',
+              width: 116,
+              height: 116,
+              fit: BoxFit.cover,
             ),
           ),
         ],
