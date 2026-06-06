@@ -48,7 +48,7 @@ class WelcomeScreen extends StatelessWidget {
                     foregroundColor: Colors.white,
                     elevation: 8,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(27),
                     ),
                   ),
                   child: Text(

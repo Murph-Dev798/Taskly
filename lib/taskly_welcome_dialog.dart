@@ -96,7 +96,7 @@ class _TasklyWelcomeDialogState extends State<TasklyWelcomeDialog> {
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(26),
                           ),
                         ),
                         child: const Text(
