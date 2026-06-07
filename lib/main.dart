@@ -135,7 +135,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ChatMessage.system(promptBuilder.systemPromptJoined()),
     );
 
-    // Show the welcome dialog once the home screen is ready
+    // Shows the welcome dialog once the home screen is ready
     WidgetsBinding.instance.addPostFrameCallback((_) {
       TasklyWelcomeDialog.show(context);
     });
@@ -325,7 +325,7 @@ class _MessageInputState extends State<MessageInput> {
                   textCapitalization: TextCapitalization.sentences,
                   style: const TextStyle(fontSize: 16),
                   decoration: InputDecoration(
-                    hintText: 'Start Planning',
+                    hintText: 'Start Planning...',
                     hintStyle: TextStyle(
                       color: colorScheme.onSurfaceVariant.withOpacity(0.6),
                       fontSize: 16,
@@ -374,6 +374,7 @@ class _MessageInputState extends State<MessageInput> {
   }
 }
 
+// Instructions being given to Firebase AI logic and GenUI Package 
 const systemInstruction = '''
   # Taskly AI System Instructions
 
