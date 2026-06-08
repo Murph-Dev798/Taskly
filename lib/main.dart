@@ -22,11 +22,60 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final noSplash = ButtonStyle(
+      overlayColor: WidgetStateProperty.all(Colors.transparent),
+      splashFactory: NoSplash.splashFactory,
+    );
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Taskly',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+        splashColor: Colors.transparent,
+        splashFactory: NoSplash.splashFactory,
+        highlightColor: Colors.transparent,
+        hoverColor: Colors.transparent,
+        focusColor: Colors.transparent,
+        iconButtonTheme: IconButtonThemeData(style: noSplash),
+        floatingActionButtonTheme: const FloatingActionButtonThemeData(
+          splashColor: Colors.transparent,
+        ),
+        textButtonTheme: TextButtonThemeData(style: noSplash),
+        elevatedButtonTheme: ElevatedButtonThemeData(style: noSplash),
+        outlinedButtonTheme: OutlinedButtonThemeData(style: noSplash),
+        filledButtonTheme: FilledButtonThemeData(style: noSplash),
+        navigationBarTheme: NavigationBarThemeData(
+          overlayColor: WidgetStateProperty.all(Colors.transparent),
+        ),
+        tabBarTheme: TabBarThemeData(
+          overlayColor: WidgetStateProperty.all(Colors.transparent),
+          splashFactory: NoSplash.splashFactory,
+        ),
+        checkboxTheme: CheckboxThemeData(
+          overlayColor: WidgetStateProperty.all(Colors.transparent),
+          splashRadius: 0,
+        ),
+        radioTheme: RadioThemeData(
+          overlayColor: WidgetStateProperty.all(Colors.transparent),
+          splashRadius: 0,
+        ),
+        switchTheme: SwitchThemeData(
+          overlayColor: WidgetStateProperty.all(Colors.transparent),
+        ),
+        sliderTheme: SliderThemeData(
+          overlayColor: Colors.transparent,
+          overlayShape: SliderComponentShape.noOverlay,
+        ),
+        menuButtonTheme: MenuButtonThemeData(style: noSplash),
+        segmentedButtonTheme: SegmentedButtonThemeData(style: noSplash),
+        toggleButtonsTheme: const ToggleButtonsThemeData(
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+        ),
+        searchBarTheme: SearchBarThemeData(
+          overlayColor: WidgetStateProperty.all(Colors.transparent),
+        ),
       ),
       initialRoute: '/',
       routes: {
