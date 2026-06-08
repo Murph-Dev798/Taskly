@@ -30,6 +30,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Taskly',
+      // Desabled the Default flutter Material Tap effects 
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         splashColor: Colors.transparent,

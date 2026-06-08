@@ -160,6 +160,39 @@ class _ProductivityIllustration extends StatelessWidget {
               width: 116,
               height: 116,
               fit: BoxFit.cover,
+              frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
+                if (wasSynchronouslyLoaded) return child;
+                return Stack(
+                  fit: StackFit.passthrough,
+                  children: [
+                    if (frame == null)
+                      Container(
+                        width: 116,
+                        height: 116,
+                        color: colorScheme.surfaceContainerHighest
+                            .withOpacity(0.4),
+                      ),
+                    AnimatedOpacity(
+                      opacity: frame == null ? 0 : 1,
+                      duration: const Duration(milliseconds: 450),
+                      curve: Curves.easeOut,
+                      child: child,
+                    ),
+                  ],
+                );
+              },
+              errorBuilder: (context, error, stackTrace) {
+                return Container(
+                  width: 116,
+                  height: 116,
+                  color: colorScheme.surfaceContainerHighest.withOpacity(0.4),
+                  child: Icon(
+                    Icons.error_outline,
+                    size: 20,
+                    color: colorScheme.onSurface.withOpacity(0.4),
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -167,6 +200,8 @@ class _ProductivityIllustration extends StatelessWidget {
     );
   }
 }
+
+
 
 class _Circle extends StatelessWidget {
   final double size;
