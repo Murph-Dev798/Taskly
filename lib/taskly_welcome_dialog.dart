@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:motor/motor.dart';
 
 class TasklyWelcomeDialog extends StatefulWidget {
   const TasklyWelcomeDialog({super.key});
@@ -33,6 +34,10 @@ class TasklyWelcomeDialog extends StatefulWidget {
 }
 
 class _TasklyWelcomeDialogState extends State<TasklyWelcomeDialog> {
+  double _buttonScale = 1.0;
+
+  void _dismiss() => Navigator.of(context).pop();
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -57,21 +62,16 @@ class _TasklyWelcomeDialogState extends State<TasklyWelcomeDialog> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Illustration
                     const _ProductivityIllustration(),
                     const SizedBox(height: 32),
-                    
-                    // Title
                     Text(
-                      "Hey there!",
+                      'Hey there!',
                       style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 18),
-                    
-                    // Body Text
                     Text(
                       "Thank you for trying Taskly. This project started as an idea and has grown because of people like you who are willing to give it a chance.\n\n"
                       "My goal is simple: help you stay organized, focused, and get things done with the power of AI.\n\n"
@@ -85,47 +85,62 @@ class _TasklyWelcomeDialogState extends State<TasklyWelcomeDialog> {
                       ),
                     ),
                     const SizedBox(height: 32),
-                    
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.black,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(26),
-                          ),
-                        ),
-                        child: const Text(
-                          " Start Using Taskly",
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.normal,
+                    Listener(
+                      onPointerDown: (_) =>
+                          setState(() => _buttonScale = 0.96),
+                      onPointerUp: (_) =>
+                          setState(() => _buttonScale = 1.0),
+                      onPointerCancel: (_) =>
+                          setState(() => _buttonScale = 1.0),
+                      child: SingleMotionBuilder(
+                        motion: CupertinoMotion.snappy(),
+                        value: _buttonScale,
+                        builder: (context, scale, child) {
+                          return Transform.scale(
+                            scale: scale,
+                            child: child,
+                          );
+                        },
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: _dismiss,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(26),
+                              ),
+                            ),
+                            child: const Text(
+                              'Start Using Taskly',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
-
                   ],
                 ),
               ),
             ),
-            
-            // Close Button
             Positioned(
               top: 12,
               right: 12,
               child: IconButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: _dismiss,
                 icon: Icon(
                   Icons.close,
                   color: colorScheme.onSurface.withOpacity(0.5),
                 ),
                 style: IconButton.styleFrom(
-                  backgroundColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                  backgroundColor:
+                      colorScheme.surfaceContainerHighest.withOpacity(0.3),
                 ),
               ),
             ),
@@ -142,7 +157,7 @@ class _ProductivityIllustration extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Container(
       height: 140,
       width: 140,
@@ -153,7 +168,6 @@ class _ProductivityIllustration extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-            // Central illustration
           ClipOval(
             child: Image.asset(
               'images/Marvito.png',
@@ -200,73 +214,3 @@ class _ProductivityIllustration extends StatelessWidget {
     );
   }
 }
-
-
-
-class _Circle extends StatelessWidget {
-  final double size;
-  final Color color;
-  const _Circle({required this.size, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    );
-  }
-}
-
-class _FloatingElement extends StatefulWidget {
-  final Widget child;
-  final int delay;
-  const _FloatingElement({required this.child, required this.delay});
-
-  @override
-  State<_FloatingElement> createState() => _FloatingElementState();
-}
-
-class _FloatingElementState extends State<_FloatingElement> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 2),
-    );
-
-    _animation = Tween<double>(begin: 0, end: 10).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
-
-    Future.delayed(Duration(milliseconds: widget.delay), () {
-      if (mounted) {
-        _controller.repeat(reverse: true);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, -_animation.value),
-          child: widget.child,
-        );
-      },
-    );
-  }
-}
-
