@@ -107,7 +107,7 @@ class _TasklyWelcomeDialogState extends State<TasklyWelcomeDialog> {
                           child: ElevatedButton(
                             onPressed: _dismiss,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.black,
+                              backgroundColor: const Color.fromARGB(255, 33, 37, 41),
                               foregroundColor: Colors.white,
                               elevation: 0,
                               shape: RoundedRectangleBorder(
