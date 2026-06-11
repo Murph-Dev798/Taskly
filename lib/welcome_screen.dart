@@ -74,7 +74,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                         ),
                       ),
                       child: Text(
-                        'Get Started',
+                        'Time to lock in',
                         style: GoogleFonts.workSans(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
